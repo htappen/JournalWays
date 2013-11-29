@@ -1,0 +1,20 @@
+.map-viewport{ position:relative; width:400px; height:300px; border:1px solid black; overflow:hidden; margin:0 0 20px 0; background: url(/images/icon/noPic.png); }
+/*.map-viewport img { margin-top: -20px; }*/
+.level{ position:absolute; left:0; top:0; z-index:10;}
+.current-level{ z-index:20; }
+#slider { margin-left:10px; margin-bottom:10px; clear:both; }
+#map{ width:1200px; height:900px; position:relative; left:0; top:0; cursor:pointer ; z-index: 100}
+img{ border:0; }
+.block{ float:left; margin-right:2%; margin-top:10px; margin-left:20px; }
+#page-wrap { position:relative; overflow:hidden; width:900px; }
+#preview { position:relative; overflow:hidden; float:left; margin-left: 100px; margin-top:10px; width: 430px; height:auto; }
+#preview .imgpreview { float:left; width: 200px; height: 150px; margin: 0; position:relative; overflow:hidden; }
+.newImagePreview .option_buttons { position:absolute; left:5px; z-index:999; }
+.newImagePreview { position:relative; overflow:hidden; height:150px; }
+ #imgLoad{
+     display: none;
+ }
+ #orientationOption{
+     display: none;
+ }
+ 

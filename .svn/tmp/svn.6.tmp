@@ -1,0 +1,423 @@
+<?php
+/* @var $this EntryController */
+/* @var $model Entry */
+/* @var $form CActiveForm */
+?>
+
+<div class="form">
+
+
+
+    
+<p class="note">Fields with <span class="required">*</span> are required.</p>
+
+<?php 
+$this->widget('ext.EAjaxUpload.EAjaxUpload',
+array(
+        'id'=>'uploadFile',
+        'config'=>array(
+               'action'=>Yii::app()->createUrl('eajaxuploader/upload'),
+               'allowedExtensions'=>array("jpg"),
+               'sizeLimit'=>10*1024*1024,
+               'minSizeLimit'=>1024,			   
+               'onComplete'=>"js:function(id, fileName, responseJSON){  getFilename(fileName, responseJSON) }",
+               'messages'=>array(
+                                 'typeError'=>"{file} has invalid extension. Only {extensions} are allowed.",
+                                 'sizeError'=>"{file} is too large, maximum file size is {sizeLimit}.",
+                                 'minSizeError'=>"{file} is too small, minimum file size is {minSizeLimit}.",
+                                 'emptyError'=>"{file} is empty, please select files again without it.",
+                                 'onLeave'=>"The files are being uploaded, if you leave now the upload will be cancelled."
+                                ),
+               'showMessage'=>"js:function(message){ alert(message); }"
+            )
+    ));
+?>
+<link rel="stylesheet" type="text/css" href="/css/css/style.css" />
+
+<link rel="stylesheet" type="text/css" href="/css/css/jquery.ui.theme.min.css?mco80x" />
+<link rel="stylesheet" type="text/css" href="/css/css/jquery.ui.slider.min.css?mco80x" />
+
+<script type="text/javascript" src="/scripts/ui/jquery.ui.core.min.js?v=1.8.7"></script>
+<script type="text/javascript" src="/scripts/ui/jquery.ui.widget.min.js?v=1.8.7"></script>
+<script type="text/javascript" src="/scripts/ui/jquery.ui.mouse.min.js?v=1.8.7"></script>
+<script type="text/javascript" src="/scripts/ui/jquery.ui.slider.min.js?v=1.8.7"></script>
+<script type="text/javascript" src="/scripts/ui/jquery.ui.button.min.js?v=1.8.7"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.6.1/jquery.min.js" type="text/javascript"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.13/jquery-ui.min.js" type="text/javascript"></script>
+<script type="text/javascript" src="http://jqueryrotate.googlecode.com/svn/trunk/jQueryRotate.js"></script>
+
+<script type="text/javascript">
+    
+var topOffsetVal = 0;
+var leftOffsetVal = 0;
+var isRotate = false;
+var originalImageWidth=0;
+var originalImageHeight=0;
+var imageLayout="none";
+
+/* default values
+ * portrait = 400wx300h
+ * landscape = 300wx400h
+ * 
+*/
+
+
+
+var imageName = "";
+
+$(document).ready(function() {		
+    
+    
+    draggableFunction("thePicture");
+        
+    var rotation = function (start){
+        $("#thePicture").rotate({            
+            animateTo:start                  
+        });
+     }
+    
+    var angle = 90;   
+    var i = 1;
+     $("#rotateLeft").click(function() {
+         isRotate = true;
+         rotation(angle);         
+         if(i%2==0) {                       
+            changeCropper('landscape');            
+         } 
+         else {
+            changeCropper('portrait');
+            $("#thePicture").css({'top':'0','left':'-70px'}); 
+         }
+         angle += 90;       
+         i++;
+    });
+    
+});
+
+/*
+ * functio reset slider
+ */
+function reInitilizeSlider(){
+    jQuery("#slider").slider({value: 0});
+}
+//-- end function reInitilizeSlider
+
+$(window).load(function(){
+    //disable the radio buttons
+    $("#changeLayout1").attr("disabled", true);
+    $("#changeLayout2").attr("disabled", true);
+    $("#changeLayout3").attr("disabled", true);
+    //disable slider
+    $("#slider").slider("disable");
+    //hide the picture
+    $("#thePicture").hide();
+    $("#cropIt").hide();
+
+})
+//global variables
+var imageState="no image";
+var responseWidth=0;
+var responseHeight=0; 
+//function to be call after the image is uploaded
+function getFilename(name,response){
+    $("#thePicture").attr({
+        src:"/upload/"+name
+    });             
+    imageName = name;
+    setTopLeftOffset(topOffsetVal,leftOffsetVal);
+
+    responseWidth=response['width'];
+    responseHeight=response['height'];
+    initializeEverything();
+}
+
+/*
+ * function initializeEverything
+ **/
+function initializeEverything(){
+    imageLoad=$("#thePicture").attr("src");
+    //enabling the controlls
+    $("#changeLayout1").removeAttr("disabled");
+    $("#changeLayout2").removeAttr("disabled");
+    $("#changeLayout3").removeAttr("disabled");
+    $("#slider").slider("enable");
+    $("#slider").slider({ step: 5 });
+    $("#thePicture").show();
+    initializeSlider();
+    $(".qq-uploader").fadeOut();
+    $("#cropIt").show();
+    var cropperHint=responseHeight-responseWidth;
+    //getting the original size of the image
+
+    //Landscape
+    if(cropperHint<=0){
+        $(".map-viewport").css({"height":"300px","width":"400px"});
+        $("#thePicture").css({"height":"300px","width":"400px"});
+        imageState="landscape";
+    }
+    //Portrait
+    else{
+        $(".map-viewport").css({"height":"400px","width":"300px"});
+        $("#thePicture").css({"height":"400px","width":"300px"});
+        imageState="portrait";
+    }
+
+    //set radio buttons
+    if(imageState=="portrait"){
+        $("#changeLayout1").attr({"checked":"checked"});
+         originalImageWidth=300;
+         originalImageHeight=400;
+    }
+    else{
+        $("#changeLayout2").attr({"checked":"checked"});
+        originalImageWidth=400;
+        originalImageHeight=300;
+
+    }
+}
+// end function initializeEverything
+
+var selectSize = "";
+
+/* 
+ * change cropper size
+ * */
+function changeCropper(size){
+    imageLayout=size;
+    if(size=="portrait"){
+        initializeSlider();
+        reInitilizeSlider()
+        $(".ui-slider-horizontal").animate({"width":"300px"});;
+        $(".map-viewport").animate({"height" : "400px", "width" : "300px"});
+        //Change the smallest portion of the picture the same as the cropper
+        if(imageState=="portrait"){				
+                $("#thePicture").animate({"width":"300px","height": 300*responseHeight/responseWidth+"px"});
+                $("#thePicture").css({'top':'0','left':'0'});
+                originalImageWidth=300;
+                originalImageHeight=300*responseHeight/responseWidth;
+                reInitilizeSlider();
+
+        }
+        else if(imageState=="landscape"){
+                $("#thePicture").animate({"height":"400px", "width": 400*responseWidth/responseHeight+"px"});
+                $("#thePicture").css({'top':'0','left':'0'});
+                originalImageWidth=400*responseWidth/responseHeight;
+                originalImageHeight=400;
+
+        }	            
+    }
+    else if(size=="landscape"){
+        initializeSlider();
+        reInitilizeSlider();
+        $(".ui-slider-horizontal").animate({"width":"400px"});
+        $(".map-viewport").animate({"height" : "300px", "width" : "400px"});
+        if(imageState=="portrait"){
+
+                $("#thePicture").animate({"width" : "400px","height": 400*responseHeight/responseWidth+"px"});
+                $("#thePicture").css({'top':'0','left':'0'});
+                originalImageWidth=400;
+                originalImageHeight=400*responseHeight/responseWidth;
+        }
+        else if(imageState=="landscape"){    
+                $("#thePicture").animate({"height":"300px", "width": 300*responseWidth/responseHeight+"px"});   
+                $("#thePicture").css({'top':'0','left':'0'});
+                originalImageWidth=300*responseWidth/responseHeight;
+                originalImageHeight=300;
+        }
+    }
+    else{
+        reInitilizeSlider()
+        $(".map-viewport").animate({"height" : "300px", "width" : "400px"});
+        $("#thePicture").animate({"height": "300px", "width": "400px"});
+    }        
+    // set offset
+    setTopLeftOffset(topOffsetVal,leftOffsetVal);               
+}    
+
+/*
+ * function initialize slider
+ **/
+function initializeSlider(){
+    // default value increment
+    var defaultIncrementSlider = 50;
+    var sliderValue = 0;
+    jQuery("#slider").slider({						
+        slide: function(){			
+                sliderValue =  jQuery("#slider").slider("value");                
+                if(isRotate) {
+                   $("#thePicture").remove();                   
+                   $("#map").append('<img src="/upload/'+imageName+'" usemap="#html-map" id="thePicture" class="current-level level" width="400" height="300" />');//.draggable();                   
+                } else {                           
+                    $("#thePicture").css({'top':'0','left':'0'});			
+                }
+                jQuery("#map img").width(originalImageWidth + sliderValue * sliderValue);			
+                jQuery("#map img").height(originalImageHeight + sliderValue * sliderValue);			
+                // display slider width and height
+                jQuery("#slider-value1").html("Slider width: " + jQuery("#map img").css("width"));			
+                jQuery("#slider-value2").html("Slider height: " + jQuery("#map img").css("height"));		
+                newImageWidth = originalImageWidth + sliderValue * defaultIncrementSlider; 									 									
+         }
+    });
+   
+}
+
+/*
+* draggable
+*/
+$(document).ready(function() {
+    $("#thePicture").live('mouseover', function(){
+     draggableFunction("thePicture");
+    });
+});
+
+
+/*
+** This is for draggable function
+**/
+function draggableFunction(id)
+{
+    $(document).ready(function() {	
+        $( "#"+ id).draggable({
+            drag : function( event, ui) {
+                var bottom = Math.abs(ui.position.top);
+                var right = Math.abs(ui.position.left);
+
+                // intialize
+                var imageWidth = 0;
+                var imageHeight = 0;
+
+                imageWidth = $(this).width() - 400;
+                imageHeight = $(this).height() - 300;	
+
+                if( (ui.position.top > 0) ||  (ui.position.left > 0) || (bottom >= imageHeight) || (right >= imageWidth) ) {
+                        event.preventDefault();	
+                }
+                //console.log(bottom,right);
+                setTopLeftOffset(bottom, right);
+            }
+        });	
+    });
+}
+// end function
+    
+/*
+* set top and left offset, for hidden field
+**/
+function setTopLeftOffset(topOffset,leftOffset) {
+    $("#topOffset").val(topOffset);
+    $("#leftOffset").val(leftOffset);
+}
+// end function
+
+
+function cropIt(){
+    //$("#editImage").after($("#editImage").clone());
+    $("#cropPreview img").attr("src", imageLoad);
+}
+function rotateLeft(){
+    var tempVarHeight=0;
+    tempVarHeight=responseWidth;
+    responseWidth=responseHeight;
+    responseHeight=tempVarHeight;
+    //$("#entry-form").preventDefault();
+    //$("thePicture")
+    /*$.ajax({
+        type: "POST",
+        url: "",
+        content: "",
+        success: function (data){
+            $("#map").html(data).show();
+        }
+    });*/
+    initializeEverything();
+}
+
+
+
+/*function rotateRight(rotateValue){
+    $("#thePicture").css({"-webkit-transform": "rotate("+rotateValue+"deg)"})
+}*/
+</script>
+
+<div id="editImage">
+    <div id="page-wrap" style="">
+        <div class="block" style="width:300px;">
+                <div class="map-viewport">
+                        <div id="map">
+                                <img src="" usemap="#html-map" id="thePicture" class="current-level level" />	
+                        </div>				
+                </div>
+        </div>		
+
+        <div style="float: right;" id="cropPreview"><img src=""/></div>
+        <br style="clear:both;" />
+         slider here 
+        <div id="slider"></div>
+        <!--<button id="rotateLeft" onClick="rotateLeft()"><<</button>-->
+        <button id="rotateLeft"><<</button>
+<!--        <button onClick="rotateRight(90)" id="rotateRight">>></button>-->
+    </div>
+    <form action="#">
+        Portrait <input  name="changeLayout" id="changeLayout1" onClick="changeCropper('portrait')" type="radio"/>
+        Landscape <input  name="changeLayout" id="changeLayout2" onClick="changeCropper('landscape')" type="radio"/>
+        <!--Defaut <input name="changeLayout" id="changeLayout3" onClick="changeCropper('default')" type="radio"/>-->
+        
+        
+        <input type="hidden" name="topOffset" id="topOffset" value="" />
+        <input type="hidden" name="leftOffset" id="leftOffset" value="" />   
+        
+        
+    </form>
+    <button onClick="cropIt()" id="cropIt">Crop Image</button>
+</div>
+<style type="text/css">
+    #cropPreview img{
+        border: solid 1px;
+    }
+</style>		
+<!-- slider here -->
+<div id="slider" style="width:50%;margin:auto auto auto auto;"></div>       
+<?php 
+$form=$this->beginWidget('CActiveForm', array(
+'id'=>'entry-form',
+'enableAjaxValidation'=>false,
+
+)); 
+?>
+<?php echo $form->errorSummary($model); ?>
+    <div class="row">
+            <?php echo $form->labelEx($model,'title'); ?>
+            <?php echo $form->textField($model,'title',array('size'=>60,'maxlength'=>100)); ?>
+            <?php echo $form->error($model,'title'); ?>
+    </div>
+
+    <div class="row">
+            <?php echo $form->labelEx($model,'body'); ?>
+            <?php echo $form->textArea($model,'body',array('cols'=>46,'rows'=>5,'maxlength'=>700)); ?>
+            <?php echo $form->error($model,'body'); ?>
+    </div>
+
+    <div class="row">
+            <?php echo $form->labelEx($model,'date'); ?>
+            <?php
+
+                $this->widget('zii.widgets.jui.CJuiDatePicker', array(
+                    'name'=>'date',
+                    // additional javascript options for the date picker plugin
+                    'options'=>array(
+                        'showAnim'=>'fold',                           
+                    ),
+                    'value'=>$model->date,
+                    'htmlOptions'=>array(
+                        'style'=>'height:20px;'
+                    ),
+                ));
+
+            ?>
+            <?php echo $form->error($model,'date'); ?>
+    </div>
+    <div class="row buttons">
+            <?php echo CHtml::submitButton($model->isNewRecord ? 'Create' : 'Save'); ?>
+    </div>
+<?php $this->endWidget(); ?>
+</div><!-- form -->

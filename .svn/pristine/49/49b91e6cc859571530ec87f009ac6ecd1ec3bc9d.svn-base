@@ -1,0 +1,414 @@
+<?php
+/* @var $this EntryController */
+/* @var $model Entry */
+/* @var $form CActiveForm */
+?>
+<div class="form">
+<p class="note">Fields with <span class="required">*</span> are required.</p>
+<?php 
+$this->widget('ext.EAjaxUpload.EAjaxUpload',
+array(
+    'id'=>'uploadFile',
+    'config'=>array(
+           'action'=>Yii::app()->createUrl('entry/upload'),
+           'allowedExtensions'=>array("jpg"),
+           'sizeLimit'=>10*1024*1024,
+           'minSizeLimit'=>1024,			   
+           'onComplete'=>"js:function(id, filename, responseJSON){  getFilename(filename, responseJSON) }",
+           'messages'=>array(
+                             'typeError'=>"{file} has invalid extension. Only {extensions} are allowed.",
+                             'sizeError'=>"{file} is too large, maximum file size is {sizeLimit}.",
+                             'minSizeError'=>"{file} is too small, minimum file size is {minSizeLimit}.",
+                             'emptyError'=>"{file} is empty, please select files again without it.",
+                             'onLeave'=>"The files are being uploaded, if you leave now the upload will be cancelled."
+                            ),
+           'showMessage'=>"js:function(message){  }"
+        )
+));
+?>
+<link rel="stylesheet" type="text/css" href="/css/css/style.css" />
+<link rel="stylesheet" type="text/css" href="/css/css/jWindowCrop.css" />
+<script type="text/javascript" src="/scripts/ui/jquery.jWindowCrop.js"></script>
+
+
+
+<script type="text/javascript">
+    
+var topOffsetVal = 0;
+var leftOffsetVal = 0;
+var cropWidth = 0;
+var cropHeight =0;
+var imageName = "";
+var imageState = "no image";
+
+var cropCounter = 1; 
+var rotateCounter =0;
+
+var responseWidth=0;
+var responseHeight=0; 
+
+
+/*
+ * start script here
+ **/
+
+
+function getFilename(filename, response){
+    topOffsetVal = 0;
+    leftOffsetVal = 0;
+    cropWidth = 0;
+    cropHeight =0;
+    imageName = "";
+    imageState = "no image";
+
+    rotateCounter =0;
+
+    responseWidth=0;
+    responseHeight=0; 
+   // console.log(validateSize(response['width'],response['height']));
+   //alert(filename + " " + response['filename']);
+   console.log(response);
+    $("#thePicture").attr(
+        'src',response['filename']
+    );             
+    imageName = response['filename'];
+    //console.log(response);
+    responseWidth=response['width'];
+    responseHeight=response['height'];
+    imageState = (responseWidth>=responseHeight)?'landscape':'portrait';
+    
+    $(".jwc_controls").show();
+   
+    changeCropper(imageState);
+    
+    $("#cropButton").show();
+    
+    $("#rotateOption").show();
+
+        $("#changeLayout1").attr("disabled", false);
+    $("#changeLayout2").attr("disabled", false);
+    if(imageState == 'landscape')
+        $("#changeLayout2").attr('checked','checked');
+    else
+         $("#changeLayout1").attr('checked','checked');
+}
+
+
+
+$(document).ready(function() {		 
+    $('#rotateRight').click(function(){               
+        rotatingImage(1);
+        rotateCounter++;
+    });
+    
+    $('#rotateLeft').click(function(){               
+        rotatingImage(-1);
+        rotateCounter--;
+    });
+    
+    $(".editPrevImage").live('click', function() {
+        var id = $(this).attr("id");         
+        var imgSrc = getBigImage($("#imgPrev"+id+"").attr("src"));         
+        editImage(imgSrc);
+        
+    });               
+    
+    $(".changePrevImage").live('click',function(){
+        var id = $(this).attr("id");   
+        var imgSrc = getBigImage($("#imgPrev"+id+"").attr("src"));                    
+        deleteImage($("#imgPrev"+id).attr("src"),id,false);        
+        $("#thePicture").attr('src', imgSrc);         
+        imageName = getSourceImage(imgSrc);                
+        changeCropper(imageState);
+    });
+        
+    $(".deletePrevImage").live('click', function() {
+        var id = $(this).attr("id");
+        var src = $("#imgPrev"+id).attr("src");
+        deleteImage(src,id,true);  
+        deleteCropImage("big_"+getBigImage(src)); 
+    });
+    
+    //disable the radio buttons
+    $("#changeLayout1").attr("disabled", true);
+    $("#changeLayout2").attr("disabled", true);
+    $("#changeLayout3").attr("disabled", true);
+    //disable slider
+   
+    //hide the picture
+    $("#thePicture").hide();
+    $("#cropButton").hide();
+    
+    // hide rotate option
+    $("#rotateOption").hide(); 
+});
+
+function countPrevDivs(){ return $(".imgpreview").length; }
+        
+function imageThumbPreview(src) {
+    if(countPrevDivs() < 4) {
+        $('<div class="imgpreview" id="imgpreview'+cropCounter+'"><div class="newImagePreview"><div style="position:absolute; left:5px; "><a href="javascript:;" class="editPrevImage" id="'+cropCounter+'"><img src="/images/icon/edit.png" alt="edit"/></a>&nbsp;<a href="javascript:;" class="changePrevImage" id="'+cropCounter+'"><img src="/images/icon/change.png" alt="change"/></a>&nbsp;<a href="javascript:;" class="deletePrevImage" id="'+cropCounter+'"><img src="/images/icon/delete.png" alt="delete"/></a></div><img src="'+src+'" class="imgPrev" id="imgPrev'+cropCounter+'" height="150" /></div></div>').appendTo("#preview");    }
+    cropCounter++;             
+}
+
+function getSourceImage(src) {          
+    var lastPoint = src.lastIndexOf("/")+1;
+    return src.substring(lastPoint, src.length);   
+}
+
+function getBigImage(src) {
+    var lastPoint = src.indexOf("_")+1;
+    return src.substring(lastPoint, src.length);
+}
+
+var isEdit = false;
+
+function editImage(src) {       
+    isEdit = true;
+    $("#thePicture").attr('src', src);         
+    imageName = getSourceImage(src);            // big image
+    smallImage = "small_" + getBigImage(src);   // small image
+   // alert($("#thePicture").attr('src') );
+    changeCropper(imageState);    
+    //removeImagePrev(imageName);
+    //removeImagePrev(smallImage);
+}
+    
+/*
+* Function delete Image
+**/
+function deleteImage(image,id,deleteOriginal)
+{   
+   var smallImage = getSourceImage(image);       
+   removeImagePrev(smallImage,id);                  
+   var bigImage = 'big_'+getBigImage(smallImage);   
+   deleteOriginalImage(getBigImage(smallImage),deleteOriginal);
+   removeImagePrev(bigImage,'');
+}
+
+/*
+* Function to remove original Image
+**/
+function deleteOriginalImage(imgSrc,deleteOriginal) {
+   if(deleteOriginal) {
+       if(imgSrc == imageName) {
+           createNewImage();
+       }
+      removeImagePrev(imgSrc,'');
+   }
+}
+
+function deleteCropImage(imgSrc){
+    if(imgSrc == imageName) {
+        createNewImage();
+    }
+    removeImagePrev(imgSrc,'');   
+}
+
+function createNewImage(){
+    $("#thePicture").remove();
+    $('<img src="" usemap="#html-map" id="thePicture" class="current-level level" />').appendTo(".jwc_frame");
+}
+
+
+/* 
+ * change cropper size
+ * */
+function changeCropper(size){     
+    imageState = size;
+    var cloneSrc = $("#thePicture").attr('src');
+    $("#thePicture").remove();
+    var clone = "<img src='"+cloneSrc+"' id='thePicture' class='current-level level'/>";
+    $("#map").empty();
+    $("#map").append(clone);
+    if(size=="portrait"){
+        $(".map-viewport").animate({"height" : "400px", "width" : "300px"});
+            $('#thePicture').jWindowCrop({
+                targetWidth: 300,
+                targetHeight: 400,
+                loadingText: '',
+                onChange: function(result) {
+                topOffsetVal = result.cropY;
+                leftOffsetVal = result.cropX;
+                cropWidth = result.cropW;
+                cropHeight = result.cropH;
+       }});
+    }
+    else if(size=="landscape"){
+   
+        $(".map-viewport").animate({"height" : "300px", "width" : "400px"});
+            $('#thePicture').jWindowCrop({
+        targetWidth: 400,
+        targetHeight: 300,
+        loadingText: '',
+        onChange: function(result) { 
+                topOffsetVal = result.cropY;
+                leftOffsetVal = result.cropX;
+                cropWidth = result.cropW;
+                cropHeight = result.cropH;
+        }
+    });        
+    }    
+}
+</script>
+<style type="text/css">
+    #cropPreview img{
+        border: solid 1px;
+        height: 300px;
+        width: 400px;
+        display: none;
+    }
+</style>
+<div id="editImage">
+    <div id="page-wrap">
+        <div class="block" style="width:300px;">
+                <div class="map-viewport">
+                        <div id="map">
+                                <img src="" usemap="#html-map" id="thePicture" class="current-level level" />	
+                        </div>				
+                </div>
+        </div>		
+        
+        <div id="preview">                        
+        </div>
+        
+
+        <div style="float: right;" id="cropPreview"><img src=""/></div>     
+        <div style="clear:both;"></div>
+        
+        <div id="rotateOption">
+            <button id="rotateLeft"> << </button>
+            <button id="rotateRight"> >> </button>
+        </div>
+
+    </div>
+    <form action="#">
+        
+        Portrait <input  name="changeLayout" id="changeLayout1" onClick="changeCropper('portrait')" type="radio"/>
+        Landscape <input  name="changeLayout" id="changeLayout2" onClick="changeCropper('landscape')" type="radio"/>        
+        
+        <input type="hidden" name="topOffset" id="topOffset" value="" />
+        <input type="hidden" name="leftOffset" id="leftOffset" value="" />   
+        <input type="hidden" name="imageOrientation" id="imageOrientation" value="" />   
+        <input type="hidden" name="rotationDegree" id="rotationDegree" value="" />   
+        
+        
+        <?php
+           
+            echo CHtml::button('Crop',array(
+                               'onclick'=>"cropIt();",
+                               'id'=>'cropButton',
+                       ));
+            
+        ?>
+    </form>
+<script language="javascript" type="text/javascript">
+        function cropIt() {            
+            var lastPoint = imageName.lastIndexOf("/")+1;
+            var imageSrc = imageName.substring(lastPoint, imageName.length);                 
+            <?php
+                echo CHtml::ajax(array(
+                        'url'=>array('entry/cropImage'),
+                        'type'=>'get',
+                        'data'=>array(
+                            'topOffset'=>'js:topOffsetVal',
+                            'leftOffset'=>'js:leftOffsetVal',
+                            'cropWidth'=>'js:cropWidth',
+                            'cropHeight'=>'js:cropHeight',
+                            'imagename'=>'js:imageSrc',
+                            'orientation'=>'js:imageState',
+                            'rotations'=>'js:rotateCounter'
+                            ),
+                        'success'=>"function(string){
+                            imageThumbPreview(string);
+                            createNewImage();
+                         }"
+                ));                               
+            ?>                      
+            // If done upload, show button
+            $(".qq-uploader").show();     
+                                    
+        }
+        
+        function removeImagePrev(imageName,id) {
+            <?php
+                echo CHtml::ajax(array(
+                    'url'=>array('entry/removeImage'),
+                    'type'=>'get',
+                    'data'=>array(                        
+                        'imageSrc'=>'js:imageName'                        
+                        ),
+                    'success'=>"function(string){               
+                        $('#imgpreview'+id).remove();  
+                     }"
+                ));
+             ?>
+        }
+                
+        function rotatingImage(num)
+        {         
+            
+            <?php
+                echo CHtml::ajax(array(
+                        'url'=>array('entry/rotateImage'),
+                        'type'=>'get',
+                        'data'=>array(                         
+                            'imagename'=>'js:imageName',
+                            'num'=>'js:num'
+                            ),
+                        'success'=>"function(string){
+                             changeCropper(imageState);
+                        }"
+                ));                               
+            ?>
+        }
+        
+ </script>
+</div>
+		
+<!-- slider here -->
+<!--<div id="slider" style="width:50%;margin:auto auto auto auto;"></div>    -->   
+<?php 
+$form=$this->beginWidget('CActiveForm', array(
+'id'=>'entry-form',
+'enableAjaxValidation'=>false,
+
+)); 
+?>
+<?php echo $form->errorSummary($model); ?>
+    <div class="row">
+            <?php echo $form->labelEx($model,'title'); ?>
+            <?php echo $form->textField($model,'title',array('size'=>60,'maxlength'=>100)); ?>
+            <?php echo $form->error($model,'title'); ?>
+    </div>
+
+    <div class="row">
+            <?php echo $form->labelEx($model,'body'); ?>
+            <?php echo $form->textArea($model,'body',array('cols'=>46,'rows'=>5,'maxlength'=>700)); ?>
+            <?php echo $form->error($model,'body'); ?>
+    </div>
+
+    <div class="row">
+            <?php echo $form->labelEx($model,'date'); ?>
+            <?php
+
+                $this->widget('zii.widgets.jui.CJuiDatePicker', array(
+                    'name'=>'date',
+                    // additional javascript options for the date picker plugin
+                    'options'=>array(
+                        'showAnim'=>'fold',                           
+                    ),
+                    'value'=>$model->date,
+                    'htmlOptions'=>array(
+                        'style'=>'height:20px;'
+                    ),
+                ));
+
+            ?>
+            <?php echo $form->error($model,'date'); ?>
+    </div>
+    <div class="row buttons">
+            <?php echo CHtml::submitButton($model->isNewRecord ? 'Create' : 'Save'); ?>
+    </div>
+<?php $this->endWidget(); ?>
+</div><!-- form -->

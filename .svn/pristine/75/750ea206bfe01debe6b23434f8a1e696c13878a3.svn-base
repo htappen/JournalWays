@@ -1,0 +1,116 @@
+<?php
+
+/**
+ * This is the model class for table "entry".
+ *
+ * The followings are the available columns in table 'entry':
+ * @property string $id
+ * @property string $title
+ * @property string $body
+ * @property string $date
+ * @property string $userId
+ * @property string $updateTime
+ * @property string $createTime
+ * @property integer $active
+ *
+ * The followings are the available model relations:
+ * @property User $user
+ * @property Photo[] $photos
+ * @property Page[] $pages
+ */
+class Entry extends TimeActiveRecord
+{
+	/**
+	 * Returns the static model of the specified AR class.
+	 * @param string $className active record class name.
+	 * @return Entry the static model class
+	 */
+	public static function model($className=__CLASS__)
+	{
+		return parent::model($className);
+	}
+
+	/**
+	 * @return string the associated database table name
+	 */
+	public function tableName()
+	{
+		return 'entry';
+	}
+
+	/**
+	 * @return array validation rules for model attributes.
+	 */
+	public function rules()
+	{
+		// NOTE: you should only define rules for those attributes that
+		// will receive user inputs.
+		return array(
+			array('body, title', 'required'),
+			array('active', 'numerical', 'integerOnly'=>true),
+			array('title', 'length', 'max'=>100),
+			array('body', 'length', 'max'=>700),
+			array('userId', 'length', 'max'=>10),
+			array('createTime', 'safe'),
+			// The following rule is used by search().
+			// Please remove those attributes that should not be searched.
+			array('id, title, body, date, userId, updateTime, createTime, active', 'safe', 'on'=>'search'),                        
+		);
+	}
+
+	/**
+	 * @return array relational rules.
+	 */
+	public function relations()
+	{
+		// NOTE: you may need to adjust the relation name and the related
+		// class name for the relations automatically generated below.
+		return array(
+			'user' => array(self::BELONGS_TO, 'User', 'userId'),
+			'photos' => array(self::MANY_MANY, 'Photo', 'entry_has_photo(entryId, photoId)'),
+			'pages' => array(self::HAS_MANY, 'Page', 'entryId'),
+		);
+	}                
+
+	/**
+	 * @return array customized attribute labels (name=>label)
+	 */
+	public function attributeLabels()
+	{
+		return array(
+			'id' => 'ID',
+			'title' => 'Title',
+			'body' => 'Body',
+			'date' => 'Date',
+			'userId' => 'User',
+			'updateTime' => 'Update Time',
+			'createTime' => 'Create Time',
+			'active' => 'Active',
+		);
+	}
+
+	/**
+	 * Retrieves a list of models based on the current search/filter conditions.
+	 * @return CActiveDataProvider the data provider that can return the models based on the search/filter conditions.
+	 */
+	public function search()
+	{
+		// Warning: Please modify the following code to remove attributes that
+		// should not be searched.
+
+		$criteria=new CDbCriteria;
+
+		$criteria->compare('id',$this->id,true);
+		$criteria->compare('title',$this->title,true);
+		$criteria->compare('body',$this->body,true);
+		$criteria->compare('date',$this->date,true);
+		$criteria->compare('userId',$this->userId,true);
+		$criteria->compare('updateTime',$this->updateTime,true);
+		$criteria->compare('createTime',$this->createTime,true);
+		$criteria->compare('active',$this->active);
+
+		return new CActiveDataProvider($this, array(
+			'criteria'=>$criteria,
+		));
+	}
+}

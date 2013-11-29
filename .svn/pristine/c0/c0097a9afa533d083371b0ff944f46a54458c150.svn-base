@@ -1,0 +1,93 @@
+<?php
+
+// change the following paths if necessary
+$yii=dirname(__FILE__).'/../yii-1.1.12.b600af/framework/yii.php';
+$config=dirname(__FILE__).'/protected/config/main.php';
+
+// remove the following lines when in production mode
+defined('YII_DEBUG') or define('YII_DEBUG',true);
+// specify how many levels of call stack should be shown in each log message
+defined('YII_TRACE_LEVEL') or define('YII_TRACE_LEVEL',3);
+
+require_once($yii);
+// Map classes for Amazon Cloud Computing Environment
+$aws_path = $_SERVER['DOCUMENT_ROOT']."/protected/vendors/amazon/"; 
+Yii::$classMap=array(
+    'S3_Exception' => $aws_path . 'sdk/services/s3.class.php',
+    'AmazonS3' => $aws_path . 'sdk/services/s3.class.php',
+    'AmazonSQS' => $aws_path . 'sdk/services/sqs.class.php',
+    'SQS_Exception' => $aws_path . 'sdk/services/sqs.class.php',
+    'AmazonRDS' => $aws_path . 'sdk/services/rds.class.php',
+    'RDS_Exception' => $aws_path . 'sdk/services/rds.class.php',
+    'CloudFront_Exception' => $aws_path . 'sdk/services/cloudfront.class.php',
+    'AmazonCloudFront' => $aws_path . 'sdk/services/cloudfront.class.php',
+    'AmazonEC2' => $aws_path . 'sdk/services/ec2.class.php',
+    'EC2_Exception' => $aws_path . 'sdk/services/ec2.class.php',
+    'AmazonIAM' => $aws_path . 'sdk/services/iam.class.php',
+    'IAM_Exception' => $aws_path . 'sdk/services/iam.class.php',
+    'AmazonELB' => $aws_path . 'sdk/services/elb.class.php',
+    'ELB_Exception' => $aws_path . 'sdk/services/elb.class.php',
+    'AmazonElasticBeanstalk' => $aws_path . 'sdk/services/elasticbeanstalk.class.php',
+    'ElasticBeanstalk_Exception' => $aws_path . 'sdk/services/elasticbeanstalk.class.php',
+    'AmazonCloudFormation' => $aws_path . 'sdk/services/cloudformation.class.php',
+    'CloudFormation_Exception' => $aws_path . 'sdk/services/cloudformation.class.php',
+    'AmazonCloudWatch' => $aws_path . 'sdk/services/cloudwatch.class.php',
+    'CloudWatch_Exception' => $aws_path . 'sdk/services/cloudwatch.class.php',
+    'AmazonSDB' => $aws_path . 'sdk/services/sdb.class.php',
+    'SDB_Exception' => $aws_path . 'sdk/services/sdb.class.php',
+    'AmazonEMR' => $aws_path . 'sdk/services/emr.class.php',
+    'EMR_Exception' => $aws_path . 'sdk/services/emr.class.php',
+    'AmazonSNS' => $aws_path . 'sdk/services/sns.class.php',
+    'SNS_Exception' => $aws_path . 'sdk/services/sns.class.php',
+    'AmazonImportExport' => $aws_path . 'sdk/services/importexport.class.php',
+    'ImportExport_Exception' => $aws_path . 'sdk/services/importexport.class.php',
+    'AmazonAS' => $aws_path . 'sdk/services/as.class.php',
+    'AS_Exception' => $aws_path . 'sdk/services/as.class.php',
+    'AmazonSES' => $aws_path . 'sdk/services/ses.class.php',
+    'Email_Exception' => $aws_path . 'sdk/services/ses.class.php',
+    'AuthV3Query' => $aws_path . 'sdk/authentication/signature_v3query.class.php',
+    'sfYaml' => $aws_path . 'sdk/lib/yaml/lib/sfYaml.php',
+    'sfYamlDumper' => $aws_path . 'sdk/lib/yaml/lib/sfYamlDumper.php',
+    'sfYamlInline' => $aws_path . 'sdk/lib/yaml/lib/sfYamlInline.php',
+    'sfYamlParser' => $aws_path . 'sdk/lib/yaml/lib/sfYamlParser.php',
+    'CachePDO' => $aws_path . 'sdk/lib/cachecore/cachepdo.class.php',
+    'CacheAPC' => $aws_path . 'sdk/lib/cachecore/cacheapc.class.php',
+    'CacheFile' => $aws_path . 'sdk/lib/cachecore/cachefile.class.php',
+    'CacheXCache' => $aws_path . 'sdk/lib/cachecore/cachexcache.class.php',
+    'CacheMC' => $aws_path . 'sdk/lib/cachecore/cachemc.class.php',
+    'CacheCore' => $aws_path . 'sdk/lib/cachecore/cachecore.class.php',
+    'RequestCore' => $aws_path . 'sdk/lib/requestcore/requestcore.class.php',
+    'ResponseCore' => $aws_path . 'sdk/lib/requestcore/requestcore.class.php',
+    'RequestCore_Exception' => $aws_path . 'sdk/lib/requestcore/requestcore.class.php',
+    'Console_ProgressBar' => $aws_path . 'sdk/_samples/lib/ProgressBar.php',
+    'CFRuntime_Exception' => $aws_path . 'sdk/sdk.class.php',
+    'CFRuntime' => $aws_path . 'sdk/sdk.class.php',
+    'CFLoader' => $aws_path . 'sdk/sdk.class.php',
+    'CFInfo' => $aws_path . 'sdk/utilities/info.class.php',
+    'CFJSON' => $aws_path . 'sdk/utilities/json.class.php',
+    'JSON_Exception' => $aws_path . 'sdk/utilities/json.class.php',
+    'CFStepConfig' => $aws_path . 'sdk/utilities/stepconfig.class.php',
+    'CFPolicy' => $aws_path . 'sdk/utilities/policy.class.php',
+    'CFArray' => $aws_path . 'sdk/utilities/array.class.php',
+    'CFMimeTypes' => $aws_path . 'sdk/utilities/mimetypes.class.php',
+    'CFStackTemplate' => $aws_path . 'sdk/utilities/stacktemplate.class.php',
+    'CFComplexType' => $aws_path . 'sdk/utilities/complextype.class.php',
+    'CFResponse' => $aws_path . 'sdk/utilities/response.class.php',
+    'CFBatchRequest_Exception' => $aws_path . 'sdk/utilities/batchrequest.class.php',
+    'CFBatchRequest' => $aws_path . 'sdk/utilities/batchrequest.class.php',
+    'CFSimpleXML' => $aws_path . 'sdk/utilities/simplexml.class.php',
+    'CFRequest' => $aws_path . 'sdk/utilities/request.class.php',
+    'CFManifest' => $aws_path . 'sdk/utilities/manifest.class.php',
+    'CFUtilities' => $aws_path . 'sdk/utilities/utilities.class.php',
+    'CFGzipDecode' => $aws_path . 'sdk/utilities/gzipdecode.class.php',
+    'CFHadoopStep' => $aws_path . 'sdk/utilities/hadoopstep.class.php',
+    "CFUtilities"=>$aws_path."sdk/utilities/utilities.class.php",
+    "CFCredentials"=>$aws_path."sdk/utilities/credentials.class.php",
+    "CFCredential"=>$aws_path."sdk/utilities/credential.class.php",
+    "CFRequest"=>$aws_path."sdk/utilities/request.class.php",
+    "Signer"=>$aws_path."sdk/authentication/signer.abstract.php",
+    "Signable"=>$aws_path."sdk/authentication/signable.interface.php",
+);
+
+
+Yii::createWebApplication($config)->run();
